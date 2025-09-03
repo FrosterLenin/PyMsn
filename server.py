@@ -1,7 +1,7 @@
 import socket
 import struct
 import zlib
-from constants import PacketType, PacketLenghts
+from constants import PacketType, PacketLenghts, BaseConstants
 
 HOST = 'localhost'
 PORT = 12345
@@ -18,6 +18,9 @@ def build_packet(packet_type, client_id, counter, body=b''):
 
 def handle_request_id(server_socket, client_address):
     global next_client_id
+    if next_client_id == BaseConstants.MAX_CLIENTS + 1:
+         print(f"Numero massimo di client raggiunto: {BaseConstants.MAX_CLIENTS}")
+         return
     assigned_id = next_client_id
     next_client_id += 1
     clients[client_address] = assigned_id
@@ -40,12 +43,12 @@ def start_server():
     while True:
         try:
             data, client_address = server_socket.recvfrom(1024)
-            if len(data) < PacketLenghts.client_header:
+            if len(data) < PacketLenghts.header:
                 print(f"Pacchetto troppo corto da {client_address}")
                 continue
 
-            packet_type, packet_length, client_id_in_header, counter, crc = struct.unpack(">BBIII", data[:PacketLenghts.client_header])
-            body = data[PacketLenghts.client_header:]
+            packet_type, packet_length, client_id_in_header, counter, crc = struct.unpack(">BBIII", data[:PacketLenghts.header])
+            body = data[PacketLenghts.header:]
 
             # Controllo CRC
             if zlib.crc32(body) != crc:

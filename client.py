@@ -29,27 +29,28 @@ class Client:
 
     def send_message(self, text):
         if self.client_id is None:
-            print("Assegnare un ID prima di inviare un messaggio")
+            print("Connessione al server fallita: Assegnare un ID prima di inviare un messaggio")
             return
         encoded = text.encode("utf-8")  # ENCODE DI QUELLO CHE SCRIVO IN CONSOLE
         packet = self.build_packet(PacketType.SEND_MESSAGE, encoded)
         self.client_socket.sendto(packet, self.server_address)
 
     def handle_packet(self, data):
-        if len(data) < PacketLenghts.client_header:
+        if len(data) < PacketLenghts.header:
             print("Pacchetto troppo corto")
             return
-        packet_type, packet_length, sender_id, counter, crc = struct.unpack(">BBIII", data[:PacketLenghts.client_header])
-        body = data[PacketLenghts.client_header:]
+        packet_type, packet_length, sender_id, counter, crc = struct.unpack(">BBIII", data[:PacketLenghts.header])
+        body = data[PacketLenghts.header:]
         calc_crc = zlib.crc32(body)
         if calc_crc != crc:
             print(f"CRC ERRATO")
             return
 
         # Controllo counter per pacchetti fuori ordine
-        last = self.last_counter.get(sender_id, 0)
-        if packet_type != PacketType.CONNECT and counter != last + 1:
-            print(f"pacchetto fuori ordine {sender_id} (counter {counter}, ultimo {last})")
+        if sender_id in self.last_counter:
+            last = self.last_counter.get(sender_id)
+            if packet_type != PacketType.CONNECT and counter != last + 1:
+                print(f"pacchetto fuori ordine {sender_id} (counter {counter}, ultimo {last})")
         self.last_counter[sender_id] = counter
 
         if packet_type == PacketType.CONNECT:
@@ -57,7 +58,7 @@ class Client:
             print(f"Connesso con ID {self.client_id}")
         elif packet_type == PacketType.SEND_MESSAGE:
             message = body.decode("utf-8")
-            print(f"[{sender_id} | {counter}] {message}")
+            print(f"[USER_{sender_id} | {counter}] {message}")
 
     def run(self):
         self.send_request_id()

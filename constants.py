@@ -6,11 +6,10 @@ class PacketType(IntEnum):
     CONNECT = 3
 
 class PacketLenghts:
-    client_header = 14 #2B + 3I (I = 4B) = 14
-    server_header = 14 #2B + 3I (I = 4B) = 14
-    client_request_id = client_header
+    header = 14 #2B + 3I (I = 4B) = 14
+    client_request_id = header
     client_base_send_messsage = 14 # 2B + 3I (I = 4B)   BBIII
-    server_response_connect = server_header
+    server_response_connect = header
 
 class BaseConstants:
-    MAX_CLIENTS = 2
+    MAX_CLIENTS = 3
