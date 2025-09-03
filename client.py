@@ -74,8 +74,12 @@ class Client:
 
         while True:
             read_sockets, _, _ = select.select([self.client_socket], [], [])
-            for socket_ in read_sockets:
-                data, _ = self.client_socket.recvfrom(1024)
+            for socket in read_sockets:
+                try:
+                    data, _ = self.client_socket.recvfrom(1024)
+                except:
+                    print(f"Server offline")
+                    return
                 self.handle_packet(data)
 
 
